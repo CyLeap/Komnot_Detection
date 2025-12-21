@@ -1,0 +1,9 @@
+url,label
+https://trusted-news-site.com/article,0
+https://official-government.com/page,0
+https://example-malicious-site.com/login,1
+https://phishing.com/verify,1
+https://bank-login-fake.com,1
+https://legit-shop.com/products,0c
+https://suspicious-site.net/account,1
+https://news-portal.com/news,0

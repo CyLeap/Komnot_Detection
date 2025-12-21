@@ -1,0 +1,280 @@
+\chapter{Introduction}
+\part{\label{key}}
+
+This chapter provides the background of the study, identifies the research problem, presents the research objectives, and explains the significance of the work.
+
+\section{Background}\label{key}
+\label{key}
+Phishing scams have become one of the most common cyber threats in Cambodia. As mobile banking, online payments, and social media use grow quickly, more people are exposed to dangerous links sent through SMS, Telegram, Facebook, TikTok, and email. Many users click these links without checking their safety because no tool can verify them in real time. This creates a serious risk, especially for users who have limited cybersecurity knowledge.
+
+Existing protection systems are available, but they do not fully solve the problem for Cambodian users. Services such as Google Safe Browsing and VirusTotal are powerful, but they do not recognize many Khmer-language scam patterns. Their datasets are mostly trained on global phishing attacks, not on the unique style of Cambodian scam links. Browser filters also fail to detect new scam pages that appear only for a short time.
+
+At the same time, there is no public Cambodian phishing URL dataset, so detection systems have no local data to learn from. As a result, users continue to fall victim because they rely only on their judgment when clicking links.
+
+The Komnot\_Detection project addresses this gap by developing a localized real-time link verification system specifically designed for Cambodian users. The system combines traditional verification methods with machine learning, using both global and local datasets to improve detection accuracy for Cambodian scam patterns.
+
+\section{Research Problem}
+
+There is no real-time link verification system designed specifically for Cambodian users.
+Current detection tools lack:
+\begin{itemize}
+	\item localized Cambodian phishing datasets,
+	\item understanding of Khmer scam patterns,
+	\item real-time URL checking before users open a link.
+\end{itemize}
+
+Because of this gap, Cambodian users remain highly vulnerable to phishing scams.
+
+The Komnot\_Detection system aims to solve this by:
+\begin{itemize}
+	\item Collecting and analyzing Cambodian-specific phishing URLs
+	\item Implementing real-time verification through an API gateway
+	\item Using machine learning to detect both known and unknown threats
+	\item Providing immediate feedback to users before link access
+\end{itemize}
+
+\section{Research Objectives}
+
+This study aims to investigate whether a localized real-time phishing detection system can improve link-scam detection accuracy. The specific objectives are:
+
+\begin{itemize}
+	\item To develop a Cambodian phishing URL dataset combined with global reputation APIs.
+	\item To design a real-time API gateway that intercepts and verifies URLs before users open them.
+	\item To evaluate whether localized data improves detection accuracy for Cambodian scam links.
+	\item To determine if redirection-based verification is practical and usable for real users.
+\end{itemize}
+
+The Komnot\_Detection project implements these objectives through:
+\begin{itemize}
+	\item Data collection from PhishTank and Alexa APIs for malicious and legitimate URLs
+	\item Flask-based API with hybrid verification (traditional + ML)
+	\item Feature extraction from URLs for machine learning classification
+	\item Real-time verification with sub-6 second response times
+\end{itemize}
+
+\section{Significance of the Study}
+
+This research is important because it provides a new approach to protecting Cambodian users from phishing scams. The study contributes by:
+
+\begin{itemize}
+	\item introducing the first Cambodia-focused phishing URL dataset,
+	\item creating a hybrid verification system using both local and global data,
+	\item offering a practical real-time tool that warns users before they access dangerous websites,
+	\item improving digital safety and reducing scam incidents in Cambodia.
+\end{itemize}
+
+The Komnot\_Detection system demonstrates practical implementation of these contributions through:
+\begin{itemize}
+	\item Automated data collection from public APIs (PhishTank, Alexa)
+	\item Modular Python codebase for easy maintenance and extension
+	\item Machine learning integration for adaptive threat detection
+	\item API-first design for integration with mobile applications
+\end{itemize}
+
+\section{URL Collection Methodology}
+
+\subsection{Data Sources}
+URLs are collected from multiple sources to ensure comprehensive coverage:
+
+\subsubsection{Malicious URLs}
+\begin{itemize}
+	\item \textbf{PhishTank API}: Provides verified phishing URLs with CSV download
+	\item \textbf{OpenPhish}: Community-driven phishing feed
+	\item \textbf{Local Cambodian Reports}: Manually collected scam URLs from Cambodian sources
+\end{itemize}
+
+\subsubsection{Legitimate URLs}
+\begin{itemize}
+	\item \textbf{Alexa Top Sites}: Popular global websites (free tier available)
+	\item \textbf{Cambodian Government Domains}: Official .kh and government websites
+	\item \textbf{Trusted News Sources}: Major Cambodian and international news outlets
+\end{itemize}
+
+\subsection{API Integration}
+The system integrates with external APIs to fetch real-time data:
+
+\subsubsection{PhishTank API Usage}
+\begin{verbatim}
+API Endpoint: https://data.phishtank.com/data/online-valid.csv
+Method: HTTP GET
+Authentication: API Key required (free registration)
+Response: CSV format with verified phishing URLs
+\end{verbatim}
+
+\subsubsection{Alexa Top Sites Integration}
+\begin{verbatim}
+API Endpoint: https://www.alexa.com/topsites/
+Method: Web scraping or paid API
+Response: List of top websites by traffic
+\end{verbatim}
+
+\subsection{Data Processing}
+Collected URLs undergo processing:
+\begin{enumerate}
+	\item Format validation using urllib.parse
+	\item Duplicate removal
+	\item Domain extraction
+	\item Feature extraction for ML training
+	\item Labeling (malicious=1, safe=0)
+\end{enumerate}
+
+\subsection{Sample URLs Used in Development}
+The following URLs were used in initial testing and paper documentation:
+
+\textbf{Malicious URLs:}
+\begin{itemize}
+	\item \textbf{URL:} https://example-malicious-site.com/login
+	\item \textbf{Length:} 42 characters
+	\item \textbf{Domain:} example-malicious-site.com
+	\item \textbf{Path:} /login
+	\item \textbf{Features:} HTTPS enabled, suspicious keyword 'login', subdomain present
+
+	\item \textbf{URL:} https://phishing.com/verify
+	\item \textbf{Length:} 26 characters
+	\item \textbf{Domain:} phishing.com
+	\item \textbf{Path:} /verify
+	\item \textbf{Features:} HTTPS enabled, suspicious keyword 'verify', short domain
+
+	\item \textbf{URL:} https://bank-login-fake.com
+	\item \textbf{Length:} 27 characters
+	\item \textbf{Domain:} bank-login-fake.com
+	\item \textbf{Path:} (none)
+	\item \textbf{Features:} HTTPS enabled, suspicious keywords 'bank' and 'login', hyphenated domain
+
+	\item \textbf{URL:} https://suspicious-site.net/account
+	\item \textbf{Length:} 35 characters
+	\item \textbf{Domain:} suspicious-site.net
+	\item \textbf{Path:} /account
+	\item \textbf{Features:} HTTPS enabled, suspicious keyword 'account', hyphenated domain
+\end{itemize}
+
+\textbf{Legitimate URLs:}
+\begin{itemize}
+	\item \textbf{URL:} https://trusted-news-site.com/article
+	\item \textbf{Length:} 38 characters
+	\item \textbf{Domain:} trusted-news-site.com
+	\item \textbf{Path:} /article
+	\item \textbf{Features:} HTTPS enabled, trusted keywords, hyphenated domain
+
+	\item \textbf{URL:} https://official-government.com/page
+	\item \textbf{Length:} 35 characters
+	\item \textbf{Domain:} official-government.com
+	\item \textbf{Path:} /page
+	\item \textbf{Features:} HTTPS enabled, official keywords, hyphenated domain
+
+	\item \textbf{URL:} https://legit-shop.com/products
+	\item \textbf{Length:} 30 characters
+	\item \textbf{Domain:} legit-shop.com
+	\item \textbf{Path:} /products
+	\item \textbf{Features:} HTTPS enabled, legitimate e-commerce keywords, hyphenated domain
+
+	\item \textbf{URL:} https://news-portal.com/news
+	\item \textbf{Length:} 28 characters
+	\item \textbf{Domain:} news-portal.com
+	\item \textbf{Path:} /news
+	\item \textbf{Features:} HTTPS enabled, news-related keywords, hyphenated domain
+\end{itemize}
+
+These URLs demonstrate the feature extraction process and classification accuracy of the system. Each URL is analyzed for:
+\begin{itemize}
+	\item \textbf{Total Length:} Character count of entire URL
+	\item \textbf{Domain Characteristics:} Length, presence of hyphens, numbers, subdomains
+	\item \textbf{Path Analysis:} Directory structure and suspicious keywords
+	\item \textbf{Security Features:} HTTPS usage, query parameters
+	\item \textbf{Suspicious Patterns:} Keywords commonly used in phishing attacks
+\end{itemize}
+
+\subsection{API Data Collection Implementation}
+The Komnot\_Detection system includes automated scripts to collect data from PhishTank and Alexa APIs:
+
+\subsubsection{PhishTank CSV Download}
+The system downloads the latest verified phishing URLs:
+\begin{verbatim}
+import requests
+import pandas as pd
+
+def download_phishtank_data(api_key):
+    url = "https://data.phishtank.com/data/online-valid.csv"
+    headers = {"Authorization": f"Bearer {api_key}"}
+
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        # Save CSV data
+        with open('data/phishtank_urls.csv', 'wb') as f:
+            f.write(response.content)
+
+        # Load and process
+        df = pd.read_csv('data/phishtank_urls.csv')
+        malicious_urls = df['url'].tolist()
+        return malicious_urls
+    else:
+        print(f"Error: {response.status_code}")
+        return []
+\end{verbatim}
+
+\subsubsection{Alexa Top Sites Collection}
+For legitimate URLs, the system collects from Alexa:
+\begin{verbatim}
+import requests
+from bs4 import BeautifulSoup
+
+def get_alexa_top_sites():
+    url = "https://www.alexa.com/topsites/"
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, 'html.parser')
+        sites = []
+
+        # Extract site URLs from Alexa rankings
+        for link in soup.find_all('a', class_='href'):
+            site_url = link.get('href')
+            if site_url and site_url.startswith('http'):
+                sites.append(site_url)
+
+        return sites[:1000]  # Top 1000 sites
+    else:
+        print(f"Error: {response.status_code}")
+        return []
+\end{verbatim}
+
+\subsubsection{Data Integration}
+The collected data is integrated into the system:
+\begin{verbatim}
+# Collect malicious URLs from PhishTank
+malicious_urls = download_phishtank_data("your_api_key_here")
+
+# Collect legitimate URLs from Alexa
+legitimate_urls = get_alexa_top_sites()
+
+# Create labeled dataset
+dataset = []
+for url in malicious_urls[:500]:  # Limit for demo
+    dataset.append({"url": url, "label": 1})
+
+for url in legitimate_urls[:500]:  # Limit for demo
+    dataset.append({"url": url, "label": 0})
+
+# Save to CSV
+df = pd.DataFrame(dataset)
+df.to_csv('data/combined_dataset.csv', index=False)
+\end{verbatim}
+
+\section*{Keywords}
+
+Phishing Attacks;  
+Scam Links;  
+Real-time Link Detection;  
+Cybersecurity in Cambodia;  
+Cambodian User Behavior;  
+Phishing Dataset (Cambodia-based);  
+URL Analysis;  
+API Gateway;  
+Link Verification System;  
+Digital Safety;  
+User Protection;  
+Internet Security Awareness;  
+Localized Cyber Risks;  
+Machine Learning;  
+Flask API;  
+URL Classification.

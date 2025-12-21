@@ -1,0 +1,277 @@
+\chapter{Methodology}
+This chapter details the methods used to develop the Komnot\_Detection system, a security API gateway for link verification. The methodology encompasses the research design, data collection strategies, and data analysis techniques employed in building a robust system that combines traditional verification methods with machine learning approaches for detecting malicious URLs.
+
+\section{Research Design}
+The research design follows a hybrid approach combining traditional cybersecurity practices with modern machine learning techniques to create an effective link verification system. The overall design is structured as follows:
+
+\subsection{System Architecture}
+The system is designed as a modular Flask-based API gateway that provides real-time URL verification capabilities. The architecture consists of the following components:
+
+\begin{itemize}
+\item \textbf{API Layer}: Flask application handling HTTP requests and responses
+\item \textbf{Verification Service}: Traditional blacklist/whitelist checking mechanism
+\item \textbf{Machine Learning Module}: URL classification using supervised learning algorithms
+\item \textbf{Utilities Module}: URL parsing and feature extraction functions
+\item \textbf{Data Layer}: Storage for blacklists, whitelists, and training datasets
+\end{itemize}
+
+\subsection{Development Methodology}
+The development follows an iterative approach:
+\begin{enumerate}
+\item \textbf{Phase 1}: Implementation of traditional verification methods (blacklist/whitelist)
+\item \textbf{Phase 2}: Development of machine learning pipeline for URL classification
+\item \textbf{Phase 3}: Integration of both approaches with fallback mechanisms
+\item \textbf{Phase 4}: Testing and validation of the complete system
+\end{enumerate}
+
+\subsection{Technology Stack}
+\begin{itemize}
+\item \textbf{Programming Language}: Python 3.8+
+\item \textbf{Web Framework}: Flask for API development
+\item \textbf{Machine Learning}: scikit-learn for model training and prediction
+\item \textbf{Data Processing}: pandas and numpy for data manipulation
+\item \textbf{Testing}: pytest for unit testing
+\end{itemize}
+
+\section{Data Collection}
+Data collection is crucial for training machine learning models and populating verification lists. The methodology includes both synthetic data generation for initial development and strategies for real-world data acquisition.
+
+\subsection{Sample Data Creation}
+For initial development and testing, a sample dataset was created containing labeled URLs:
+
+\begin{verbatim}
+url,label
+https://trusted-news-site.com/article,0
+https://official-government.com/page,0
+https://example-malicious-site.com/login,1
+https://phishing.com/verify,1
+\end{verbatim}
+
+Where label 0 represents safe URLs and label 1 represents malicious URLs.
+
+\subsection{Real-World Data Sources}
+In production environments, data collection would involve:
+
+\subsubsection{Malicious URL Datasets}
+\begin{itemize}
+\item \textbf{PhishTank}: Open-source database of phishing URLs
+\item \textbf{Google Safe Browsing API}: Real-time malicious URL detection
+\item \textbf{OpenPhish}: Community-driven phishing URL feed
+\end{itemize}
+
+\subsubsection{Legitimate URL Datasets}
+\begin{itemize}
+\item \textbf{Alexa Top Sites}: Popular legitimate websites
+\item \textbf{Trusted Domain Lists}: Government and educational institution domains
+\item \textbf{News Aggregator APIs}: Verified news sources
+\end{itemize}
+
+\subsection{Data Collection Algorithm}
+The data collection process follows this algorithm:
+
+\begin{algorithm}
+\caption{Data Collection Process}
+\begin{algorithmic}[1]
+\State Initialize empty datasets: $malicious\_urls \gets \emptyset$, $legitimate\_urls \gets \emptyset$
+\State Query PhishTank API for malicious URLs
+\For{each URL in PhishTank response}
+    \State $malicious\_urls \gets malicious\_urls \cup \{URL\}$
+\EndFor
+\State Query Alexa Top Sites for legitimate URLs
+\For{each URL in Alexa response}
+    \State $legitimate\_urls \gets legitimate\_urls \cup \{URL\}$
+\EndFor
+\State Label datasets: $malicious\_urls$ with label 1, $legitimate\_urls$ with label 0
+\State Combine and shuffle datasets
+\State Save to CSV format for model training
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Data Validation}
+Each collected URL undergoes validation:
+\begin{itemize}
+\item URL format validation using Python's \texttt{urllib.parse}
+\item Domain resolution checks
+\item Removal of duplicates
+\item Filtering of invalid or unreachable URLs
+\end{itemize}
+
+\section{Data Analysis}
+Data analysis involves feature extraction from URLs, model training, and prediction algorithms. The methodology combines statistical analysis with machine learning techniques.
+
+\subsection{Feature Extraction}
+URL features are extracted to create numerical representations suitable for machine learning algorithms.
+
+\subsubsection{URL Parsing Algorithm}
+\begin{algorithm}
+\caption{URL Feature Extraction}
+\begin{algorithmic}[1]
+\Function{extract\_features}{$url$}
+    \State Parse URL using \texttt{urllib.parse.urlparse(url)}
+    \State $scheme \gets parsed\_url.scheme$
+    \State $netloc \gets parsed\_url.netloc$
+    \State $path \gets parsed\_url.path$
+    \State $query \gets parsed\_url.query$
+    \State $features \gets []$
+    
+    \State $features.append(len(url))$ \Comment{URL length}
+    \State $features.append(1$ if $scheme == 'https'$ else $0)$ \Comment{HTTPS check}
+    \State $features.append(len(netloc))$ \Comment{Domain length}
+    \State $features.append(netloc.count('.'))$ \Comment{Number of dots}
+    \State $features.append(1$ if $\exists digit \in netloc$ else $0)$ \Comment{Has digits in domain}
+    \State $features.append(1$ if $\exists [-_] \in netloc$ else $0)$ \Comment{Has special chars in domain}
+    \State $features.append(len(path))$ \Comment{Path length}
+    \State $features.append(1$ if $query \neq \emptyset$ else $0)$ \Comment{Has query parameters}
+    \State $features.append(1$ if $suspicious\_words(url)$ else $0)$ \Comment{Suspicious keywords}
+    
+    \Return $features$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Suspicious Words Detection}
+The system checks for suspicious keywords that commonly appear in phishing URLs:
+
+\begin{verbatim}
+suspicious_words = ['login', 'account', 'verify', 'password', 'bank', 'secure', 'update']
+\end{verbatim}
+
+\subsection{Machine Learning Model Training}
+The core ML algorithm uses Logistic Regression for binary classification.
+
+\subsubsection{Model Training Algorithm}
+\begin{algorithm}
+\caption{Machine Learning Model Training}
+\begin{algorithmic}[1]
+\State Load dataset: $urls, labels \gets load\_csv('data/sample\_urls.csv')$
+\State Initialize feature matrix: $X \gets []$
+\For{each $url$ in $urls$}
+    \State $features \gets extract\_features(url)$
+    \State $X.append(features)$
+\EndFor
+\State Convert to numpy arrays: $X \gets np.array(X)$, $y \gets np.array(labels)$
+\State Split data: $X_{train}, X_{test}, y_{train}, y_{test} \gets train\_test\_split(X, y, test\_size=0.2)$
+\State Initialize model: $model \gets LogisticRegression()$
+\State Train model: $model.fit(X_{train}, y_{train})$
+\State Predict on test set: $y_{pred} \gets model.predict(X_{test})$
+\State Calculate accuracy: $accuracy \gets accuracy\_score(y_{test}, y_{pred})$
+\State Print training results
+\State Save model to file using pickle
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Logistic Regression Details}
+Logistic Regression is chosen for its:
+\begin{itemize}
+\item Interpretability of coefficients
+\item Efficiency on small to medium datasets
+\item Probabilistic output for confidence scores
+\item Resistance to overfitting with proper regularization
+\end{itemize}
+
+The model equation is:
+\[ P(y=1|x) = \frac{1}{1 + e^{-(\beta_0 + \beta_1 x_1 + \dots + \beta_n x_n)}} \]
+
+Where:
+\begin{itemize}
+\item $x_i$ are the extracted features
+\item $\beta_i$ are the learned coefficients
+\item $P(y=1|x)$ is the probability of the URL being malicious
+\end{itemize}
+
+\subsection{Traditional Verification Methods}
+For URLs not covered by the ML model, traditional methods are employed.
+
+\subsubsection{Blacklist/Whitelist Checking Algorithm}
+\begin{algorithm}
+\caption{Traditional URL Verification}
+\begin{algorithmic}[1]
+\Function{verify\_url}{$url$}
+    \State $domain \gets extract\_domain(url)$
+    \If{$domain \in blacklist$}
+        \Return "malicious"
+    \ElsIf{$domain \in whitelist$}
+        \Return "safe"
+    \Else
+        \Return "unknown"
+    \EndIf
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Hybrid Verification System}
+The complete system combines both approaches:
+
+\begin{algorithm}
+\caption{Hybrid URL Verification System}
+\begin{algorithmic}[1]
+\Function{hybrid\_verify}{$url$}
+    \State Validate URL format
+    \If{URL is invalid}
+        \Return "error: invalid URL"
+    \EndIf
+    
+    \State $traditional\_result \gets verify\_url(url)$
+    \If{$traditional\_result \neq "unknown"$}
+        \Return $traditional\_result$
+    \EndIf
+    
+    \If{ML model is trained}
+        \State $features \gets extract\_features(url)$
+        \State $prediction \gets model.predict([features])[0]$
+        \Return "malicious" if $prediction == 1$ else "safe"
+    \Else
+        \Return "unknown"
+    \EndIf
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Performance Evaluation}
+Model performance is evaluated using standard metrics:
+
+\subsubsection{Evaluation Metrics}
+\begin{itemize}
+\item \textbf{Accuracy}: $(TP + TN) / (TP + TN + FP + FN)$
+\item \textbf{Precision}: $TP / (TP + FP)$
+\item \textbf{Recall}: $TP / (TP + FN)$
+\item \textbf{F1-Score}: $2 \times (Precision \times Recall) / (Precision + Recall)$
+\end{itemize}
+
+Where:
+\begin{itemize}
+\item TP = True Positives (correctly identified malicious URLs)
+\item TN = True Negatives (correctly identified safe URLs)
+\item FP = False Positives (safe URLs identified as malicious)
+\item FN = False Negatives (malicious URLs identified as safe)
+\end{itemize}
+
+\subsection{Testing and Validation}
+The system undergoes comprehensive testing:
+
+\subsubsection{Unit Testing}
+Individual components are tested using pytest:
+\begin{itemize}
+\item URL parsing functions
+\item Feature extraction accuracy
+\item Model prediction consistency
+\item API endpoint responses
+\end{itemize}
+
+\subsubsection{Integration Testing}
+End-to-end testing of the complete system:
+\begin{itemize}
+\item API request/response cycles
+\item Database interactions
+\item Model loading and prediction
+\end{itemize}
+
+\subsubsection{Performance Testing}
+System performance is evaluated under load:
+\begin{itemize}
+\item Response times for URL verification
+\item Memory usage during model training
+\item Scalability with increasing URL volumes
+\end{itemize}
+
+This comprehensive methodology ensures the development of a robust, scalable, and accurate link verification system suitable for real-world deployment in cybersecurity applications.
