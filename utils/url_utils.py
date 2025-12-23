@@ -43,7 +43,7 @@ def is_valid_url(url):
 
 def load_urls_from_csv(filepath):
     """Load URLs and labels from CSV file."""
-    df = pd.read_csv(filepath)
+    df = pd.read_csv(filepath, header=None, names=['url', 'label'])
     urls = df['url'].tolist()
     labels = df['label'].tolist()
     return urls, labels
