@@ -28,8 +28,44 @@ This project creates a web gateway that automatically checks URLs for security t
 
 1. Install Python 3.8+
 2. Clone the repository
-3. Install dependencies: `pip install -r requirements.txt`
-4. Run the gateway: `python gateway.py`
+3. **CRITICAL: Set up API keys securely (see Security section below)**
+4. Install dependencies: `pip install -r requirements.txt`
+5. Run the gateway: `python gateway.py`
+
+## 🔐 Security - API Key Setup
+
+**NEVER commit API keys to version control!** This is a critical security risk.
+
+### Step-by-Step API Key Setup:
+
+1. **Copy the example environment file:**
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Get your API keys:**
+
+   - **Gemini API Key**: Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
+   - **PhishTank API Key** (optional): Visit [PhishTank API Registration](https://phishtank.com/api_register.php)
+
+3. **Edit `.env` file with your actual keys:**
+
+   ```bash
+   GEMINI_API_KEY=your_actual_gemini_key_here
+   PHISHTANK_API_KEY=your_actual_phishtank_key_here
+   ```
+
+4. **Verify `.gitignore` includes `.env`:**
+   - The `.gitignore` file already excludes `.env` files
+   - Never remove this protection!
+
+### What happens if API keys are missing:
+
+- The system will use fallback sample data
+- Gemini AI features will be disabled
+- PhishTank API features will be disabled
+- The application will still work with basic functionality
 
 ## Usage
 
@@ -152,4 +188,3 @@ dataset = collector.collect_all_data(
 - Mobile app integration
 - Advanced ML model architectures
 - Browser extension integration
-
