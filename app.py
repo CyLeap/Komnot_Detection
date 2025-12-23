@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, Response, render_template_string
 import requests
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlparse
 from services.verification_service import VerificationService
 from models.url_classifier import URLClassifier
 from utils.url_utils import extract_features, is_valid_url, load_urls_from_csv
@@ -27,6 +27,21 @@ except FileNotFoundError:
 def proxy(path):
     # Get the target URL from query parameter or form data
     target_url = request.args.get('url') or request.form.get('url')
+
+    # Check if this is a direct proxy request (browser sending URL as path)
+    if not target_url and path.startswith(('http://', 'https://')):
+        target_url = path
+    # Check if this is a browser proxy request (no url parameter, has host header)
+    elif not target_url and 'Host' in request.headers and path:
+        # Reconstruct URL from Host header and path
+        host = request.headers.get('Host')
+        if host:
+            scheme = 'https' if request.headers.get(
+                'X-Forwarded-Proto') == 'https' else 'http'
+            if path.startswith('/'):
+                target_url = f"{scheme}://{host}{path}"
+            else:
+                target_url = f"{scheme}://{host}/{path}"
 
     if not target_url:
         # If no URL provided, show the gateway interface
@@ -163,22 +178,30 @@ def proxy(path):
 
         # Handle different HTTP methods
         if request.method == 'GET':
-            resp = requests.get(target_url, headers=headers, params=request.args, allow_redirects=False)
+            resp = requests.get(target_url, headers=headers,
+                                params=request.args, allow_redirects=False)
         elif request.method == 'POST':
             if request.is_json:
-                resp = requests.post(target_url, headers=headers, json=request.get_json(), allow_redirects=False)
+                resp = requests.post(
+                    target_url, headers=headers, json=request.get_json(), allow_redirects=False)
             else:
-                resp = requests.post(target_url, headers=headers, data=request.form, allow_redirects=False)
+                resp = requests.post(
+                    target_url, headers=headers, data=request.form, allow_redirects=False)
         elif request.method == 'PUT':
-            resp = requests.put(target_url, headers=headers, data=request.data, allow_redirects=False)
+            resp = requests.put(target_url, headers=headers,
+                                data=request.data, allow_redirects=False)
         elif request.method == 'DELETE':
-            resp = requests.delete(target_url, headers=headers, allow_redirects=False)
+            resp = requests.delete(
+                target_url, headers=headers, allow_redirects=False)
         elif request.method == 'PATCH':
-            resp = requests.patch(target_url, headers=headers, data=request.data, allow_redirects=False)
+            resp = requests.patch(
+                target_url, headers=headers, data=request.data, allow_redirects=False)
         elif request.method == 'HEAD':
-            resp = requests.head(target_url, headers=headers, allow_redirects=False)
+            resp = requests.head(
+                target_url, headers=headers, allow_redirects=False)
         elif request.method == 'OPTIONS':
-            resp = requests.options(target_url, headers=headers, allow_redirects=False)
+            resp = requests.options(
+                target_url, headers=headers, allow_redirects=False)
         else:
             return jsonify({"error": "Unsupported HTTP method"}), 405
 
@@ -229,7 +252,7 @@ def proxy_confirmed():
         return jsonify({"error": "Invalid request"}), 400
 
     # Redirect to the main proxy with the confirmed URL
-    from flask import redirect, url_for
+    from flask import redirect
     return redirect(f'/?url={target_url}&confirmed=true')
 
 

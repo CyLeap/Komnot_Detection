@@ -67,25 +67,18 @@ In production environments, data collection would involve:
 \end{itemize}
 
 \subsection{Data Collection Algorithm}
-The data collection process follows this algorithm:
+The data collection process follows these steps:
 
-\begin{algorithm}
-\caption{Data Collection Process}
-\begin{algorithmic}[1]
-\State Initialize empty datasets: $malicious\_urls \gets \emptyset$, $legitimate\_urls \gets \emptyset$
-\State Query PhishTank API for malicious URLs
-\For{each URL in PhishTank response}
-    \State $malicious\_urls \gets malicious\_urls \cup \{URL\}$
-\EndFor
-\State Query Alexa Top Sites for legitimate URLs
-\For{each URL in Alexa response}
-    \State $legitimate\_urls \gets legitimate\_urls \cup \{URL\}$
-\EndFor
-\State Label datasets: $malicious\_urls$ with label 1, $legitimate\_urls$ with label 0
-\State Combine and shuffle datasets
-\State Save to CSV format for model training
-\end{algorithmic}
-\end{algorithm}
+\begin{enumerate}
+\item Initialize empty datasets: $malicious\_urls \gets \emptyset$, $legitimate\_urls \gets \emptyset$
+\item Query PhishTank API for malicious URLs
+\item For each URL in PhishTank response: $malicious\_urls \gets malicious\_urls \cup \{URL\}$
+\item Query Alexa Top Sites for legitimate URLs
+\item For each URL in Alexa response: $legitimate\_urls \gets legitimate\_urls \cup \{URL\}$
+\item Label datasets: $malicious\_urls$ with label 1, $legitimate\_urls$ with label 0
+\item Combine and shuffle datasets
+\item Save to CSV format for model training
+\end{enumerate}
 
 \subsection{Data Validation}
 Each collected URL undergoes validation:
@@ -103,31 +96,23 @@ Data analysis involves feature extraction from URLs, model training, and predict
 URL features are extracted to create numerical representations suitable for machine learning algorithms.
 
 \subsubsection{URL Parsing Algorithm}
-\begin{algorithm}
-\caption{URL Feature Extraction}
-\begin{algorithmic}[1]
-\Function{extract\_features}{$url$}
-    \State Parse URL using \texttt{urllib.parse.urlparse(url)}
-    \State $scheme \gets parsed\_url.scheme$
-    \State $netloc \gets parsed\_url.netloc$
-    \State $path \gets parsed\_url.path$
-    \State $query \gets parsed\_url.query$
-    \State $features \gets []$
-    
-    \State $features.append(len(url))$ \Comment{URL length}
-    \State $features.append(1$ if $scheme == 'https'$ else $0)$ \Comment{HTTPS check}
-    \State $features.append(len(netloc))$ \Comment{Domain length}
-    \State $features.append(netloc.count('.'))$ \Comment{Number of dots}
-    \State $features.append(1$ if $\exists digit \in netloc$ else $0)$ \Comment{Has digits in domain}
-    \State $features.append(1$ if $\exists [-_] \in netloc$ else $0)$ \Comment{Has special chars in domain}
-    \State $features.append(len(path))$ \Comment{Path length}
-    \State $features.append(1$ if $query \neq \emptyset$ else $0)$ \Comment{Has query parameters}
-    \State $features.append(1$ if $suspicious\_words(url)$ else $0)$ \Comment{Suspicious keywords}
-    
-    \Return $features$
-\EndFunction
-\end{algorithmic}
-\end{algorithm}
+The URL feature extraction process follows these steps:
+
+\begin{enumerate}
+\item Parse URL using \texttt{urllib.parse.urlparse(url)}
+\item Extract components: $scheme$, $netloc$, $path$, $query$
+\item Initialize empty features list: $features \gets []$
+\item Append URL length: $features.append(len(url))$
+\item Check HTTPS: $features.append(1$ if $scheme == 'https'$ else $0)$
+\item Append domain length: $features.append(len(netloc))$
+\item Count dots in domain: $features.append(netloc.count('.'))$
+\item Check for digits in domain: $features.append(1$ if $\exists digit \in netloc$ else $0)$
+\item Check for special characters: $features.append(1$ if $\exists [-_] \in netloc$ else $0)$
+\item Append path length: $features.append(len(path))$
+\item Check query parameters: $features.append(1$ if $query \neq \emptyset$ else $0)$
+\item Check suspicious keywords: $features.append(1$ if $suspicious\_words(url)$ else $0)$
+\item Return features list
+\end{enumerate}
 
 \subsubsection{Suspicious Words Detection}
 The system checks for suspicious keywords that commonly appear in phishing URLs:
@@ -140,25 +125,19 @@ suspicious_words = ['login', 'account', 'verify', 'password', 'bank', 'secure', 
 The core ML algorithm uses Logistic Regression for binary classification.
 
 \subsubsection{Model Training Algorithm}
-\begin{algorithm}
-\caption{Machine Learning Model Training}
-\begin{algorithmic}[1]
-\State Load dataset: $urls, labels \gets load\_csv('data/sample\_urls.csv')$
-\State Initialize feature matrix: $X \gets []$
-\For{each $url$ in $urls$}
-    \State $features \gets extract\_features(url)$
-    \State $X.append(features)$
-\EndFor
-\State Convert to numpy arrays: $X \gets np.array(X)$, $y \gets np.array(labels)$
-\State Split data: $X_{train}, X_{test}, y_{train}, y_{test} \gets train\_test\_split(X, y, test\_size=0.2)$
-\State Initialize model: $model \gets LogisticRegression()$
-\State Train model: $model.fit(X_{train}, y_{train})$
-\State Predict on test set: $y_{pred} \gets model.predict(X_{test})$
-\State Calculate accuracy: $accuracy \gets accuracy\_score(y_{test}, y_{pred})$
-\State Print training results
-\State Save model to file using pickle
-\end{algorithmic}
-\end{algorithm}
+The machine learning model training process follows these steps:
+
+\begin{enumerate}
+\item Load dataset: $urls, labels \gets load\_csv('data/sample\_urls.csv')$
+\item Initialize feature matrix: $X \gets []$
+\item For each $url$ in $urls$: $features \gets extract\_features(url)$, $X.append(features)$
+\item Convert to numpy arrays: $X \gets np.array(X)$, $y \gets np.array(labels)$
+\item Split data: $X_{train}, X_{test}, y_{train}, y_{test} \gets train\_test\_split(X, y, test\_size=0.2)$
+\item Initialize model: $model \gets LogisticRegression()$
+\item Train model: $model.fit(X_{train}, y_{train})$
+\item Predict on test set: $y_{pred} \gets model.predict(X_{test})$
+\item Calculate accuracy: $accuracy \gets accuracy\_score(y_{test}, y_{pred})$
+\item Print training results
 
 \subsubsection{Logistic Regression Details}
 Logistic Regression is chosen for its:
@@ -183,49 +162,31 @@ Where:
 For URLs not covered by the ML model, traditional methods are employed.
 
 \subsubsection{Blacklist/Whitelist Checking Algorithm}
-\begin{algorithm}
-\caption{Traditional URL Verification}
-\begin{algorithmic}[1]
-\Function{verify\_url}{$url$}
-    \State $domain \gets extract\_domain(url)$
-    \If{$domain \in blacklist$}
-        \Return "malicious"
-    \ElsIf{$domain \in whitelist$}
-        \Return "safe"
-    \Else
-        \Return "unknown"
-    \EndIf
-\EndFunction
-\end{algorithmic}
-\end{algorithm}
+The traditional URL verification process follows these steps:
+
+\begin{enumerate}
+\item $domain \gets extract\_domain(url)$
+\item If $domain \in blacklist$: Return "malicious"
+\item Else if $domain \in whitelist$: Return "safe"
+\item Else: Return "unknown"
+\end{enumerate}
 
 \subsection{Hybrid Verification System}
 The complete system combines both approaches:
 
-\begin{algorithm}
-\caption{Hybrid URL Verification System}
-\begin{algorithmic}[1]
-\Function{hybrid\_verify}{$url$}
-    \State Validate URL format
-    \If{URL is invalid}
-        \Return "error: invalid URL"
-    \EndIf
-    
-    \State $traditional\_result \gets verify\_url(url)$
-    \If{$traditional\_result \neq "unknown"$}
-        \Return $traditional\_result$
-    \EndIf
-    
-    \If{ML model is trained}
-        \State $features \gets extract\_features(url)$
-        \State $prediction \gets model.predict([features])[0]$
-        \Return "malicious" if $prediction == 1$ else "safe"
-    \Else
-        \Return "unknown"
-    \EndIf
-\EndFunction
-\end{algorithmic}
-\end{algorithm}
+\begin{enumerate}
+\item Validate URL format
+\item If URL is invalid: Return "error: invalid URL"
+\item $traditional\_result \gets verify\_url(url)$
+\item If $traditional\_result \neq "unknown"$: Return $traditional\_result$
+\item If ML model is trained:
+   \begin{enumerate}
+   \item $features \gets extract\_features(url)$
+   \item $prediction \gets model.predict([features])[0]$
+   \item Return "malicious" if $prediction == 1$ else "safe"
+   \end{enumerate}
+\item Else: Return "unknown"
+\end{enumerate}
 
 \subsection{Performance Evaluation}
 Model performance is evaluated using standard metrics:

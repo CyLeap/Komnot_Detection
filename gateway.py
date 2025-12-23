@@ -1,12 +1,8 @@
-from flask import Flask, jsonify, request, Response, render_template_string, redirect
-import requests
-from urllib.parse import urljoin, urlparse, quote, unquote
+from flask import Flask, jsonify, request, render_template_string, redirect
+from urllib.parse import quote, unquote
 from services.verification_service import VerificationService
 from models.url_classifier import URLClassifier
 from utils.url_utils import extract_features, is_valid_url, load_urls_from_csv
-import threading
-import socket
-import ssl
 
 app = Flask(__name__)
 
@@ -27,7 +23,7 @@ except FileNotFoundError:
 def check_url_status(url):
     """Check if URL is safe or malicious."""
     status = verification_service.verify_url(url)
-    
+
     if status == "unknown" and url_classifier.is_trained:
         try:
             features = extract_features(url)
@@ -36,226 +32,250 @@ def check_url_status(url):
         except Exception as e:
             print(f"ML prediction error: {e}")
             status = "unknown"
-    
+
     return status
 
 
-@app.route('/', methods=['GET'])
-def gateway_home():
-    """Show the gateway homepage with instructions."""
-    return render_template_string('''
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>🛡️ Komnot URL Gateway</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { 
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                min-height: 100vh;
-                padding: 40px 20px;
-            }
-            .container { 
-                max-width: 800px; 
-                margin: 0 auto; 
-                background: white; 
-                padding: 40px; 
-                border-radius: 20px; 
-                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            }
-            h1 { 
-                color: #333; 
-                text-align: center; 
-                font-size: 32px;
-                margin-bottom: 10px;
-            }
-            .subtitle {
-                text-align: center;
-                color: #666;
-                margin-bottom: 30px;
-                font-size: 16px;
-            }
-            .url-form { 
-                margin: 30px 0; 
-                background: #f8f9fa;
-                padding: 30px;
-                border-radius: 15px;
-            }
-            input[type="text"] { 
-                width: 100%; 
-                padding: 16px; 
-                margin: 10px 0; 
-                border: 2px solid #ddd; 
-                border-radius: 10px; 
-                font-size: 16px; 
-                box-sizing: border-box;
-                transition: border-color 0.3s;
-            }
-            input[type="text"]:focus {
-                outline: none;
-                border-color: #667eea;
-            }
-            button { 
-                width: 100%; 
-                padding: 16px 24px; 
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white; 
-                border: none; 
-                border-radius: 10px; 
-                cursor: pointer; 
-                font-size: 16px;
-                font-weight: 600;
-                transition: transform 0.2s, box-shadow 0.2s;
-                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-            }
-            button:hover { 
-                transform: translateY(-2px);
-                box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
-            }
-            .info { 
-                background: linear-gradient(135deg, #e7f3ff 0%, #f0e7ff 100%);
-                padding: 25px; 
-                border-radius: 15px; 
-                margin: 20px 0; 
-                border-left: 5px solid #667eea;
-            }
-            .info-title {
-                font-weight: 700;
-                color: #333;
-                margin-bottom: 15px;
-                font-size: 18px;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            }
-            .info-list {
-                list-style: none;
-                padding: 0;
-            }
-            .info-list li {
-                padding: 8px 0;
-                padding-left: 30px;
-                position: relative;
-                color: #555;
-            }
-            .info-list li:before {
-                content: "✓";
-                position: absolute;
-                left: 0;
-                color: #667eea;
-                font-weight: bold;
-                font-size: 20px;
-            }
-            .warning-box {
-                background: #fff3cd;
-                border: 2px solid #ffc107;
-                border-radius: 15px;
-                padding: 25px;
-                margin: 20px 0;
-            }
-            .warning-title {
-                color: #856404;
-                font-weight: 700;
-                margin-bottom: 15px;
-                font-size: 18px;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            }
-            .warning-text {
-                color: #856404;
-                line-height: 1.6;
-            }
-            .feature-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 20px;
-                margin: 30px 0;
-            }
-            .feature-card {
-                background: white;
-                padding: 25px;
-                border-radius: 15px;
-                border: 2px solid #e9ecef;
-                text-align: center;
-                transition: transform 0.2s, box-shadow 0.2s;
-            }
-            .feature-card:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            }
-            .feature-icon {
-                font-size: 40px;
-                margin-bottom: 15px;
-            }
-            .feature-title {
-                font-weight: 600;
-                color: #333;
-                margin-bottom: 10px;
-            }
-            .feature-desc {
-                color: #666;
-                font-size: 14px;
-            }
-            @media (max-width: 600px) {
-                .container { padding: 25px; }
-                h1 { font-size: 24px; }
-                .feature-grid { grid-template-columns: 1fr; }
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>🛡️ Komnot URL Gateway</h1>
-            <p class="subtitle">Your personal web security checkpoint</p>
-            
-            <form class="url-form" action="/check" method="GET">
-                <input type="text" name="url" placeholder="Enter URL (e.g., http://example.com)" required>
-                <button type="submit">🔍 Check & Visit URL</button>
-            </form>
+# Catch-all route for proxy functionality
+@app.route('/', defaults={'path': ''}, methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'])
+@app.route('/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'])
+def proxy(path):
+    # Get the target URL from query parameter or form data
+    target_url = request.args.get('url') or request.form.get('url')
 
-            <div class="feature-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">🤖</div>
-                    <div class="feature-title">AI-Powered</div>
-                    <div class="feature-desc">Machine learning detects threats</div>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">⚡</div>
-                    <div class="feature-title">Real-Time</div>
-                    <div class="feature-desc">Instant URL analysis</div>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🔒</div>
-                    <div class="feature-title">Secure</div>
-                    <div class="feature-desc">Blocks malicious sites</div>
-                </div>
-            </div>
-            
-            <div class="info">
-                <div class="info-title">🎯 How It Works</div>
-                <ul class="info-list">
-                    <li>Enter any URL in the form above</li>
-                    <li>Our AI analyzes it for threats</li>
-                    <li>Safe URLs redirect automatically</li>
-                    <li>Suspicious URLs show a warning page</li>
-                </ul>
-            </div>
+    # Check if this is a direct proxy request (browser sending URL as path)
+    if not target_url and path.startswith(('http://', 'https://')):
+        target_url = path
+    # Check if this is a browser proxy request (no url parameter, has host header)
+    elif not target_url and 'Host' in request.headers and path:
+        # Reconstruct URL from Host header and path
+        host = request.headers.get('Host')
+        if host:
+            scheme = 'https' if request.headers.get(
+                'X-Forwarded-Proto') == 'https' else 'http'
+            if path.startswith('/'):
+                target_url = f"{scheme}://{host}{path}"
+            else:
+                target_url = f"{scheme}://{host}/{path}"
 
-            <div class="warning-box">
-                <div class="warning-title">⚠️ Important Note</div>
-                <div class="warning-text">
-                    This gateway works best with the manual URL checker above. 
-                    For browser-wide protection, please use the manual checker interface 
-                    rather than configuring as a system proxy.
-                </div>
+    if not target_url:
+        # If no URL provided, show the gateway interface
+        return render_template_string('''
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🛡️ Komnot URL Gateway</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        .url-form {
+            margin: 30px 0;
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 16px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            width: 100%;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+        .info {
+            background: linear-gradient(135deg, #e7f3ff 0%, #f0e7ff 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border-left: 5px solid #667eea;
+        }
+        .info-title {
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .info-list {
+            list-style: none;
+            padding: 0;
+        }
+        .info-list li {
+            padding: 8px 0;
+            padding-left: 30px;
+            position: relative;
+            color: #555;
+        }
+        .info-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 20px;
+        }
+        .warning-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        .warning-title {
+            color: #856404;
+            font-weight: 700;
+            margin-bottom: 15px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .warning-text {
+            color: #856404;
+            line-height: 1.6;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .feature-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            border: 2px solid #e9ecef;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .feature-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+        }
+        .feature-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .feature-desc {
+            color: #666;
+            font-size: 14px;
+        }
+        @media (max-width: 600px) {
+            .container { padding: 25px; }
+            h1 { font-size: 24px; }
+            .feature-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ Komnot URL Gateway</h1>
+        <p class="subtitle">Your personal web security checkpoint</p>
+
+        <form class="url-form" action="/check" method="GET">
+            <input type="text" name="url" placeholder="Enter URL (e.g., http://example.com)" required>
+            <button type="submit">🔍 Check & Visit URL</button>
+        </form>
+
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <div class="feature-title">AI-Powered</div>
+                <div class="feature-desc">Machine learning detects threats</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <div class="feature-title">Real-Time</div>
+                <div class="feature-desc">Instant URL analysis</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <div class="feature-title">Secure</div>
+                <div class="feature-desc">Blocks malicious sites</div>
             </div>
         </div>
-    </body>
-    </html>
-    ''')
+
+        <div class="info">
+            <div class="info-title">🎯 How It Works</div>
+            <ul class="info-list">
+                <li>Enter any URL in the form above</li>
+                <li>Our AI analyzes it for threats</li>
+                <li>Safe URLs redirect automatically</li>
+                <li>Suspicious URLs show a warning page</li>
+            </ul>
+        </div>
+
+        <div class="warning-box">
+            <div class="warning-title">⚠️ Important Note</div>
+            <div class="warning-text">
+                This gateway works best with the manual URL checker above.
+                For browser-wide protection, please use the manual checker interface
+                rather than configuring as a system proxy.
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+''')
+
+    # For any other requests (like favicon.ico), return 404
+    return "Not found", 404
 
 
 @app.route('/check', methods=['GET'])
@@ -265,28 +285,28 @@ def check_url():
 
     if not target_url:
         return render_template_string('''
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Error - Komnot Gateway</title>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-                body { font-family: Arial, sans-serif; margin: 40px; background-color: #f5f5f5; }
-                .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; }
-                h1 { color: #dc3545; }
-                a { color: #007bff; text-decoration: none; font-weight: 600; }
-                a:hover { text-decoration: underline; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h1>❌ Error</h1>
-                <p>No URL provided</p>
-                <p><a href="/">← Go back to home</a></p>
-            </div>
-        </body>
-        </html>
-        '''), 400
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Error - Komnot Gateway</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {font-family: Arial, sans-serif; margin: 40px; background-color: #f5f5f5; }
+        .container {max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; }
+        h1 {color: #dc3545; }
+        a {color: #007bff; text-decoration: none; font-weight: 600; }
+        a:hover {text-decoration: underline;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>❌ Error</h1>
+        <p>No URL provided</p>
+        <p><a href="/">← Go back to home</a></p>
+    </div>
+</body>
+</html>
+'''), 400
 
     # Add http:// if no scheme
     if not target_url.startswith(('http://', 'https://')):
@@ -295,28 +315,28 @@ def check_url():
     # Validate URL
     if not is_valid_url(target_url):
         return render_template_string('''
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Invalid URL - Komnot Gateway</title>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-                body { font-family: Arial, sans-serif; margin: 40px; background-color: #f5f5f5; }
-                .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; }
-                h1 { color: #dc3545; }
-                a { color: #007bff; text-decoration: none; font-weight: 600; }
-                a:hover { text-decoration: underline; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h1>❌ Invalid URL</h1>
-                <p><strong>{{ target_url }}</strong> is not a valid URL</p>
-                <p><a href="/">← Go back to home</a></p>
-            </div>
-        </body>
-        </html>
-        ''', target_url=target_url), 400
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Invalid URL - Komnot Gateway</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {font-family: Arial, sans-serif; margin: 40px; background-color: #f5f5f5; }
+        .container {max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; }
+        h1 {color: #dc3545; }
+        a {color: #007bff; text-decoration: none; font-weight: 600; }
+        a:hover {text-decoration: underline;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>❌ Invalid URL</h1>
+        <p><strong>{{target_url}}</strong> is not a valid URL</p>
+        <p><a href="/">← Go back to home</a></p>
+    </div>
+</body>
+</html>
+''', target_url=target_url), 400
 
     # Check URL safety
     status = check_url_status(target_url)
@@ -331,8 +351,8 @@ def check_url():
             <title>⚠️ Security Warning - Komnot Gateway</title>
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <style>
-                * { margin: 0; padding: 0; box-sizing: border-box; }
-                body { 
+                * {margin: 0; padding: 0; box-sizing: border-box;}
+                body {
                     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                     min-height: 100vh;
@@ -351,8 +371,8 @@ def check_url():
                     animation: slideIn 0.4s ease-out;
                 }
                 @keyframes slideIn {
-                    from { opacity: 0; transform: translateY(-20px); }
-                    to { opacity: 1; transform: translateY(0); }
+                    from {opacity: 0; transform: translateY(-20px);}
+                    to {opacity: 1; transform: translateY(0);}
                 }
                 .warning-header {
                     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
@@ -366,8 +386,8 @@ def check_url():
                     animation: pulse 2s infinite;
                 }
                 @keyframes pulse {
-                    0%, 100% { transform: scale(1); }
-                    50% { transform: scale(1.1); }
+                    0%, 100% {transform: scale(1);}
+                    50% {transform: scale(1.1);}
                 }
                 .warning-header h1 {
                     font-size: 28px;
@@ -454,11 +474,11 @@ def check_url():
                 .btn-safe {
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                     color: white;
-                    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+                    box-shadow: 0 4px 15px rgba(102,126,234,0.4);
                 }
                 .btn-safe:hover {
                     transform: translateY(-2px);
-                    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+                    box-shadow: 0 6px 20px rgba(102,126,234,0.5);
                 }
                 .btn-danger {
                     background: white;
@@ -469,9 +489,9 @@ def check_url():
                     background: #f8f9fa;
                     transform: translateY(-2px);
                 }
-                @media (max-width: 600px) {
-                    .warning-header h1 { font-size: 24px; }
-                    .warning-body { padding: 30px 20px; }
+                @media(max-width: 600px) {
+                    .warning-header h1 {font-size: 24px;}
+                    .warning-body {padding: 30px 20px;}
                 }
             </style>
         </head>
@@ -485,9 +505,9 @@ def check_url():
                 <div class="warning-body">
                     <div class="url-display">
                         <div class="url-label">Flagged URL</div>
-                        <div class="url-text">{{ target_url }}</div>
+                        <div class="url-text">{{target_url}}</div>
                     </div>
-                    
+
                     <div class="threat-info">
                         <h3>⚠️ Potential Threats</h3>
                         <ul>
@@ -497,10 +517,10 @@ def check_url():
                             <li>Data compromise risks</li>
                         </ul>
                     </div>
-                    
+
                     <div class="button-group">
                         <a href="/" class="btn btn-safe">← Go Back to Safety</a>
-                        <a href="/visit/{{ encoded_url }}" class="btn btn-danger">
+                        <a href="/visit/{{encoded_url}}" class="btn btn-danger">
                             Proceed Anyway (Not Recommended)
                         </a>
                     </div>
@@ -545,5 +565,5 @@ if __name__ == '__main__':
     print("   - Safe URLs redirect automatically")
     print("   - Malicious URLs show warning page")
     print("\n" + "="*60 + "\n")
-    
+
     app.run(host='127.0.0.1', port=5000, debug=True)

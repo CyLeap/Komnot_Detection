@@ -1,0 +1,121 @@
+% ProjetAMS.tex
+% Main document using the local class: projectau.cls
+% (See projectau.cls for provenance details and modification history.)
+
+
+% Class options are set in projectau.cls.
+% You can still override common ones here, e.g.:
+% \documentclass[preprint,linenumbers,hidekeys]{projectau}
+\documentclass[showkeys, twoside]{projectau}
+
+% You may use additional packages here
+
+
+% Project metadata
+
+
+ \renewcommand{\formation}{Bachelor of Computer Science}
+ \renewcommand{\promotion}{Promotion 2024}
+ \renewcommand{\project}{Komnot_Detection Project}
+ \renewcommand{\projectname}{Komnot_Detection}
+\renewcommand{\headerlogo}{AU_LOGO}
+
+
+
+
+
+%%%%%%%%%%%%%  Document starts here
+
+\begin{document}
+
+\pagestyle{fancy}
+
+
+%%%%% You can edit here the document informations
+
+
+\title{Komnot\_Detection: A Security API Gateway for Link Verification}% 
+
+
+% Student
+
+\author{Student Name}
+ \affiliation{Cambodia Academy of Digital Technology.}
+ \email{student@example.com}
+
+% Promoters
+
+ \author{First Promoter}%
+ \author{Second Promoter}%
+\affiliation{Promoter affiliations}%
+
+
+
+\author{Third Promoter}
+\affiliation{Another promoter affiliation}
+
+
+
+\date{\today}% It is always \today, today,
+             %  but any date may be explicitly specified
+
+\begin{abstract}
+[Abstract to be provided later]
+\end{abstract}
+
+\keywords{URL detection, cybersecurity, machine learning, API gateway}%Use showkeys class option if keyword
+
+% display desired
+\maketitle
+\thispagestyle{fancy}
+
+\tableofcontents
+
+
+
+\section{Introduction}
+\label{sec:introduction}
+
+\input{introduction.tex}
+
+\section{Literature Review}
+\label{sec:literature}
+
+[Literature review content to be provided later]
+
+\section{Methodology}
+\label{sec:methodology}
+
+\input{methodology.tex}
+
+\section{Results}
+\label{sec:results}
+
+[Results content to be provided later]
+
+\section{Discussion}
+\label{sec:discussion}
+
+[Discussion content to be provided later]
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+[Conclusion content to be provided later]
+
+\begin{acknowledgments}
+  Acknowledgments to be added later.
+\end{acknowledgments}
+
+% \appendix
+
+% \section{Appendixes}
+
+% If you need to provide supplementary information that may be of interest.
+
+
+\bibliography{bibliography}% Produces the bibliography via BibTeX from file bibliography.bib.
+
+\end{document}
+%
+% ****** End of file apssamp.tex ******
