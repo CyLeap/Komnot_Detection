@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 from services.verification_service import VerificationService
 from models.url_classifier import URLClassifier
 from utils.url_utils import extract_features, is_valid_url, load_urls_from_csv
+from utils.translation_utils import translate_to_khmer
 
 app = Flask(__name__)
 
@@ -49,7 +50,7 @@ def proxy(path):
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Komnot URL Gateway</title>
+            <title>កំណត់់ URL Gateway</title>
             <style>
                 body { font-family: Arial, sans-serif; margin: 40px; background-color: #f5f5f5; }
                 .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
@@ -64,19 +65,19 @@ def proxy(path):
         </head>
         <body>
             <div class="container">
-                <h1>🛡️ Komnot URL Gateway</h1>
+                <h1>🛡️ កំណត់ URL Gateway</h1>
                 <div class="info">
-                    <strong>How it works:</strong><br>
-                    • Enter any URL to check if it's safe<br>
-                    • Safe URLs will be forwarded automatically<br>
-                    • Suspicious URLs will show a confirmation page
+                    <strong>វិធីសាស្ត្រដំណើរការ:</strong><br>
+                    • បញ្ចូល URL ណាមួយដើម្បីពិនិត្យមើលថាតើវាមានសុវត្ថិភាពទេ<br>
+                    • URL ដែលមានសុវត្ថិភាពនឹងត្រូវបានបញ្ជូនដោយស្វ័យប្រវត្តិ<br>
+                    • URL ដែលសង្ស័យនឹងបង្ហាញទំព័របញ្ជាក់
                 </div>
                 <form class="url-form" action="/" method="GET">
                     <input type="text" name="url" placeholder="https://example.com" required>
-                    <button type="submit">Check & Visit</button>
+                    <button type="submit">ពិនិត្យ និងចូលមើល</button>
                 </form>
                 <div class="warning">
-                    <strong>Note:</strong> This gateway analyzes URLs for potential security threats using machine learning and traditional methods.
+                    <strong>ចំណាំ:</strong> ច្រកចេញចូលនេះវិភាគ URL សម្រាប់ការគំរាមកំហែងសុវត្ថិភាពដែលអាចមានដោយប្រើម៉ាស៊ីនរៀន និងវិធីសាស្ត្រប្រពៃណី។
                 </div>
             </div>
         </body>
@@ -89,7 +90,7 @@ def proxy(path):
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Invalid URL - Komnot Gateway</title>
+            <title>URL មិនត្រឹមត្រូវ - Komnot Gateway</title>
             <style>
                 body { font-family: Arial, sans-serif; margin: 40px; background-color: #f8d7da; }
                 .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; border: 2px solid #dc3545; }
@@ -101,10 +102,10 @@ def proxy(path):
         </head>
         <body>
             <div class="container">
-                <h1>❌ Invalid URL Format</h1>
-                <p class="error">The URL you entered is not valid: <strong>{{ target_url }}</strong></p>
-                <p>Please check the URL and try again.</p>
-                <button onclick="window.history.back()">Go Back</button>
+                <h1>❌ ទម្រង់ URL មិនត្រឹមត្រូវ</h1>
+                <p class="error">URL ដែលអ្នកបានបញ្ចូលមិនត្រឹមត្រូវទេ: <strong>{{ target_url }}</strong></p>
+                <p>សូមពិនិត្យ URL ឡើងវិញ ហើយព្យាយាមម្តងទៀត។</p>
+                <button onclick="window.history.back()">ត្រឡប់ក្រោយ</button>
             </div>
         </body>
         </html>
@@ -129,7 +130,7 @@ def proxy(path):
         <!DOCTYPE html>
         <html>
         <head>
-            <title>⚠️ Security Warning - Komnot Gateway</title>
+            <title>⚠️ ការព្រមានសុវត្ថិភាព - Komnot Gateway</title>
             <style>
                 body { font-family: Arial, sans-serif; margin: 40px; background-color: #f8d7da; }
                 .container { max-width: 700px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; border: 3px solid #dc3545; }
@@ -145,18 +146,18 @@ def proxy(path):
         </head>
         <body>
             <div class="container">
-                <h1>🚨 Security Warning</h1>
+                <h1>🚨 ការព្រមានសុវត្ថិភាព</h1>
                 <div class="warning">
-                    <strong>This URL has been flagged as potentially malicious!</strong><br><br>
+                    <strong>URL នេះត្រូវបានចាត់ទុកថាអាចមានគំរាមកំហែង!</strong><br><br>
                     <strong>URL:</strong> <span class="url-display">{{ target_url }}</span><br><br>
-                    Our analysis indicates this website may contain malware, phishing attempts, or other security threats.
+                    ការវិភាគរបស់យើងបង្ហាញថាតំបន់បណ្តាញនេះអាចមាន malware, phishing, ឬការគំរាមកំហែងសុវត្ថិភាពផ្សេងទៀត។
                 </div>
                 <div class="buttons">
-                    <button class="btn-danger" onclick="window.history.back()">Cancel - Go Back</button>
+                    <button class="btn-danger" onclick="window.history.back()">បោះបង់ - ត្រឡប់ក្រោយ</button>
                     <form action="/proxy" method="POST" style="display: inline;">
                         <input type="hidden" name="url" value="{{ target_url }}">
                         <input type="hidden" name="confirmed" value="true">
-                        <button type="submit" class="btn-safe">I Understand the Risk - Proceed Anyway</button>
+                        <button type="submit" class="btn-safe">ខ្ញុំយល់ពីហានិភ័យ - បន្តទៀត</button>
                     </form>
                 </div>
             </div>
@@ -220,7 +221,7 @@ def proxy(path):
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Connection Error - Komnot Gateway</title>
+            <title>កំហុសក្នុងការតភ្ជាប់ - Komnot Gateway</title>
             <style>
                 body { font-family: Arial, sans-serif; margin: 40px; background-color: #f8d7da; }
                 .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; border: 2px solid #dc3545; }
@@ -232,10 +233,10 @@ def proxy(path):
         </head>
         <body>
             <div class="container">
-                <h1>❌ Connection Error</h1>
-                <p class="error">Unable to connect to: <strong>{{ target_url }}</strong></p>
-                <p>Error: {{ error }}</p>
-                <button onclick="window.history.back()">Go Back</button>
+                <h1>❌ កំហុសក្នុងការតភ្ជាប់</h1>
+                <p class="error">មិនអាចតភ្ជាប់ទៅ: <strong>{{ target_url }}</strong></p>
+                <p>កំហុស: {{ error }}</p>
+                <button onclick="window.history.back()">ត្រឡប់ក្រោយ</button>
             </div>
         </body>
         </html>
